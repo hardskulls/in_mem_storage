@@ -1,0 +1,1 @@
+Presentation layer dedicated to presenting something to the end user.
