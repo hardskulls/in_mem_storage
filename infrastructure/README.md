@@ -1,1 +1,1 @@
-Infrastructure layer dedicated to any external services (DBs, etc).
+Infrastructure layer dedicated to any external services (databases, net, etc).

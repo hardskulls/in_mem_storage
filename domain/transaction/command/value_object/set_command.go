@@ -1,7 +1,7 @@
 package value_objects
 
 import (
-	rec "in_mem_storage/domain/transactions/record/value_objects"
+	rec "in_mem_storage/domain/transaction/record/value_object"
 )
 
 type SetCommand[K comparable, D, T, E any] struct {

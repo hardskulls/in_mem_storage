@@ -1,20 +1,28 @@
 package services
 
 import (
-	repo "in_mem_storage/domain/rate_limiter/repositories"
-	lim "in_mem_storage/domain/rate_limiter/value_objects"
+	repo "in_mem_storage/application/service/rate_limiter/repository"
+	lim "in_mem_storage/domain/rate_limiter/value_object"
 )
 
-type RateLimiter[U, L any, K comparable] struct {
+type RateLimitService[U, L any, K comparable] struct {
 	rateLimitRepo repo.RateLimitRepo[U, L, K]
 }
 
-func WithRateLimitRepo[U, L any, K comparable](repo repo.RateLimitRepo[U, L, K]) RateLimiter[U, L, K] {
-	return RateLimiter[U, L, K]{rateLimitRepo: repo}
+func WithRateLimitRepo[U, L any, K comparable](repo repo.RateLimitRepo[U, L, K]) RateLimitService[U, L, K] {
+	return RateLimitService[U, L, K]{rateLimitRepo: repo}
 }
 
-func (rl *RateLimiter[U, L, K]) GetBy(by K) (lim.RateLimit[U, L], error) {
-	return rl.rateLimitRepo.Get(by)
+func (rl *RateLimitService[U, L, K]) Get(key K) (lim.RateLimit[U, L], error) {
+	return rl.rateLimitRepo.Get(key)
+}
+
+func (rl *RateLimitService[U, L, K]) Set(key K, value lim.RateLimit[U, L]) error {
+	return rl.rateLimitRepo.Set(key, value)
+}
+
+func (rl *RateLimitService[U, L, K]) Delete(key K) error {
+	return rl.rateLimitRepo.Delete(key)
 }
 
 // type TokenBucket struct {

@@ -1,7 +1,7 @@
 package ports
 
 import (
-	req "in_mem_storage/domain/incoming_requests/value_objects"
+	req "in_mem_storage/domain/incoming_request/value_object"
 )
 
 type RequestPort[D any] interface {
