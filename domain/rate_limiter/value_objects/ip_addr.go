@@ -1,5 +1,5 @@
 package value_objects
 
-type IpAddr struct {
-	Ip any
+type IpAddr[T any] struct {
+	Ip T
 }

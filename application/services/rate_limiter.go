@@ -1,24 +1,41 @@
 package services
 
 import (
-	// rl "in_mem_storage/internal/domain/rate_limiter/abstractions"
-	// "sync"
-	// "time"
-	repo "in_mem_storage/internal/domain/rate_limiter/repositories"
-	lim "in_mem_storage/internal/domain/rate_limiter/value_objects"
+	repo "in_mem_storage/domain/rate_limiter/repositories"
+	lim "in_mem_storage/domain/rate_limiter/value_objects"
 )
 
-type RateLimiter struct {
-	rateLimitRepo repo.RateLimitRepo
+type RateLimiter[U, L any, K comparable] struct {
+	rateLimitRepo repo.RateLimitRepo[U, L, K]
 }
 
-func WithRateLimitRepo(repo repo.RateLimitRepo) RateLimiter {
-	return RateLimiter{rateLimitRepo: repo}
+func WithRateLimitRepo[U, L any, K comparable](repo repo.RateLimitRepo[U, L, K]) RateLimiter[U, L, K] {
+	return RateLimiter[U, L, K]{rateLimitRepo: repo}
 }
 
-func (rl *RateLimiter) GetBy(by any) (lim.RateLimit, error) {
+func (rl *RateLimiter[U, L, K]) GetBy(by K) (lim.RateLimit[U, L], error) {
 	return rl.rateLimitRepo.Get(by)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

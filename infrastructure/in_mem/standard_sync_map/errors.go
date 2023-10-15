@@ -2,7 +2,7 @@ package standard_sync_map
 
 import (
 	"fmt"
-	"in_mem_storage/internal/domain/errors"
+	"in_mem_storage/domain/errors"
 )
 
 func DeleteError() errors.Error {

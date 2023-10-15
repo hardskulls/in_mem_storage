@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	rec "in_mem_storage/internal/domain/transactions/record/value_objects"
+	rec "in_mem_storage/domain/transactions/record/value_objects"
 )
 
 type RecordRepo[K comparable, D, T, E any] interface {

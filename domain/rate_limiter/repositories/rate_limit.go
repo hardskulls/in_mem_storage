@@ -1,9 +1,9 @@
 package repositories
 
 import (
-	lim "in_mem_storage/internal/domain/rate_limiter/value_objects"
+	lim "in_mem_storage/domain/rate_limiter/value_objects"
 )
 
-type RateLimitRepo interface {
-	Get(by any) (lim.RateLimit, error)
+type RateLimitRepo[U, L any, K comparable] interface {
+	Get(by K) (lim.RateLimit[U, L], error)
 }
