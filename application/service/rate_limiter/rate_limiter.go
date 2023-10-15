@@ -17,28 +17,6 @@ func (rl *RateLimiter[U, L, K]) GetBy(by K) (lim.RateLimit[U, L], error) {
 	return rl.rateLimitRepo.Get(by)
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // type TokenBucket struct {
 // 	*sync.Mutex
 // 	startedAt     time.Time

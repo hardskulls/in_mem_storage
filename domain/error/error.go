@@ -16,14 +16,14 @@ func New(msg string, skip int) Error {
 	return Error{msg: msg, file: file, line: line}
 }
 
-func(e Error) Msg() string {
+func (e Error) Msg() string {
 	return e.msg
 }
 
-func(e Error) OccuredAt() string {
+func (e Error) OccurredAt() string {
 	return fmt.Sprintf("%v:%v", e.file, e.line)
 }
 
-func(e Error) Error() string {
-	return fmt.Sprintf("msg: '%v', file and line: %v", e.Msg(), e.OccuredAt())
+func (e Error) Error() string {
+	return fmt.Sprintf("msg: '%v', file and line: %v", e.Msg(), e.OccurredAt())
 }

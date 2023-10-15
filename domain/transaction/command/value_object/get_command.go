@@ -1,6 +1,5 @@
 package value_objects
 
-
 type GetCommand[K comparable] struct {
 	key K
 }

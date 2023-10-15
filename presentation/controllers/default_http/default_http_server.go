@@ -1,9 +1,9 @@
 package default_http
 
 import (
+	"in_mem_storage/application/services"
 	"io"
 	"net/http"
-	"in_mem_storage/internal/application/services"
 )
 
 type DefaultHttp struct {
@@ -15,7 +15,7 @@ func (s *DefaultHttp) Handle(req *http.Request, resp io.Writer) {
 
 type CommandController[Req, Resp any] struct {
 	reqHandler services.RequestHandler[Req, Resp]
-	recordRepo  any
+	recordRepo any
 }
 
 func (c *CommandController[Req, Resp]) Do(f func(req *http.Request, resp io.Writer), handler Htt) {

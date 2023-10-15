@@ -1,12 +1,11 @@
 package standard_sync_map
 
 import (
-	// t "in_mem_storage/internal/domain/transactions/value_objects"
 	"sync"
 )
 
-type SyncMapStorage struct {
-	sync.Map
+type SyncMapStorage[K comparable] struct {
+	inner sync.Map
 }
 
 // func(*SyncMapStorage) New() SyncMapStorage {

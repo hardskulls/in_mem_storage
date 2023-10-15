@@ -6,7 +6,7 @@ import (
 )
 
 func TestDeleteError(t *testing.T) {
-	err := DeleteError().OccuredAt()
+	err := DeleteError().OccurredAt()
 	// [!!] Line number is crucial here [!!]
 	hasValidFileLineInfo := strings.HasSuffix(err, "errors_test.go:9")
 	if !hasValidFileLineInfo {
@@ -15,7 +15,7 @@ func TestDeleteError(t *testing.T) {
 }
 
 func TestDGetError(t *testing.T) {
-	err := GetError().OccuredAt()
+	err := GetError().OccurredAt()
 	// [!!] Line number is crucial here [!!]
 	hasValidFileLineInfo := strings.HasSuffix(err, "errors_test.go:17")
 	if !hasValidFileLineInfo {
@@ -32,5 +32,3 @@ func foo() {
 	res := comp(s, "foo")
 	println(res)
 }
-
-

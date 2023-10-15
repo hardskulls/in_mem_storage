@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	rec "in_mem_storage/domain/transactions/record/value_objects"
