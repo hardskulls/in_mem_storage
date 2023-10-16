@@ -5,12 +5,14 @@ import (
 	req "in_mem_storage/domain/incoming_request/value_object"
 )
 
-type RequestService[D any] struct {
-	requestPort port.RequestPort[D]
+type RequestService[R, W any] struct {
+	requestPort port.RequestPort[R, W]
 }
 
-func NewRequestService[D any](with port.RequestPort[D]) RequestService[D] {
-	return RequestService[D]{with}
+func NewRequestService[R, W any](with port.RequestPort[R, W]) RequestService[R, W] {
+	return RequestService[R, W]{with}
 }
 
-func (rs *RequestService[D]) Handle(r func(req *req.Request[D])) {}
+func (rs *RequestService[R, W]) Handle(handlers ...req.ReqHandlerFunc[R, W]) {
+	rs.requestPort.Handle(handlers...)
+}

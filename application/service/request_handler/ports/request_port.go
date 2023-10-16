@@ -4,6 +4,6 @@ import (
 	req "in_mem_storage/domain/incoming_request/value_object"
 )
 
-type RequestPort[D any] interface {
-	Handle(f func(r req.Request[D]))
+type RequestPort[R, W any] interface {
+	Handle(handlers ...req.ReqHandlerFunc[R, W])
 }
