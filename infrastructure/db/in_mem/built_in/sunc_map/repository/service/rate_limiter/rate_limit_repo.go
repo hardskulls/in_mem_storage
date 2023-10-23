@@ -6,28 +6,28 @@ import (
 	"sync"
 )
 
-type RateLimitRepo[K comparable, U, L any] struct {
+type RateLimitRepo[K comparable] struct {
 	inner sync.Map
 }
 
-func New[K comparable, U, L any]() RateLimitRepo[K, U, L] {
-	return RateLimitRepo[K, U, L]{sync.Map{}}
+func New[K comparable]() RateLimitRepo[K] {
+	return RateLimitRepo[K]{sync.Map{}}
 }
 
-func (r *RateLimitRepo[K, U, L]) Get(key K) (lim.RateLimit[U, L], errs.Error) {
+func (r *RateLimitRepo[K]) Get(key K) (lim.RateLimit, errs.Error) {
 	val, ok := r.inner.Load(key)
 	if !ok {
-		return lim.RateLimit[U, L]{}, GetError()
+		return lim.RateLimit{}, GetError()
 	}
-	return val.(lim.RateLimit[U, L]), errs.Error{}
+	return val.(lim.RateLimit), errs.Error{}
 }
 
-func (r *RateLimitRepo[K, U, L]) Set(key K, value lim.RateLimit[U, L]) errs.Error {
+func (r *RateLimitRepo[K]) Set(key K, value lim.RateLimit) errs.Error {
 	r.inner.Store(key, value)
 	return errs.Error{}
 }
 
-func (r *RateLimitRepo[K, U, L]) Delete(key K) errs.Error {
+func (r *RateLimitRepo[K]) Delete(key K) errs.Error {
 	r.inner.Delete(key)
 	return errs.Error{}
 }

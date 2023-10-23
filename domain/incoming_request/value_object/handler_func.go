@@ -1,6 +1,6 @@
 package value_objects
 
-type ReqHandlerFunc[R, W any] struct {
+type ReqHandler[Read, Write any] struct {
 	Path   string
-	Handle func(req R, resp W)
+	Handle func(req Read, resp Write)
 }

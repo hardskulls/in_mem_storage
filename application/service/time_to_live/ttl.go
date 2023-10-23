@@ -5,22 +5,22 @@ import (
 	ec "in_mem_storage/domain/time_to_live/value_object"
 )
 
-type TimeToLiveService[K, C comparable] struct {
-	expiryCandidateRepo repo.ExpiryCandidateRepo[K, C]
+type TimeToLiveService[K comparable] struct {
+	expiryCandidateRepo repo.ExpiryCandidateRepo[K]
 }
 
-func NewTimeToLiveService[K, C comparable](repo repo.ExpiryCandidateRepo[K, C]) TimeToLiveService[K, C] {
-	return TimeToLiveService[K, C]{repo}
+func NewTimeToLiveService[K comparable](repo repo.ExpiryCandidateRepo[K]) TimeToLiveService[K] {
+	return TimeToLiveService[K]{repo}
 }
 
-func (rl *TimeToLiveService[K, C]) Get(key K) (ec.ExpiryCandidate[C], error) {
+func (rl *TimeToLiveService[K]) Get(key K) (ec.ExpiryCandidate, error) {
 	return rl.expiryCandidateRepo.Get(key)
 }
 
-func (rl *TimeToLiveService[K, C]) Set(key K, value ec.ExpiryCandidate[C]) error {
+func (rl *TimeToLiveService[K]) Set(key K, value ec.ExpiryCandidate) error {
 	return rl.expiryCandidateRepo.Set(key, value)
 }
 
-func (rl *TimeToLiveService[K, C]) Delete(key K) error {
+func (rl *TimeToLiveService[K]) Delete(key K) error {
 	return rl.expiryCandidateRepo.Delete(key)
 }

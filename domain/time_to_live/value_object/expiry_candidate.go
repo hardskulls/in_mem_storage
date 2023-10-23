@@ -1,5 +1,5 @@
 package value_objects
 
-type ExpiryCandidate[K comparable] struct {
-	Candidate K
+type ExpiryCandidate struct {
+	Candidate string
 }

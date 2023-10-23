@@ -13,7 +13,12 @@ type Error struct {
 
 func New(msg string, skip int) Error {
 	_, file, line, _ := runtime.Caller(skip + 1)
-	return Error{msg: msg, file: file, line: line}
+	return Error{msg, file, line}
+}
+
+func FromError(err error, skip int) Error {
+	_, file, line, _ := runtime.Caller(skip + 1)
+	return Error{err.Error(), file, line}
 }
 
 func (e Error) Msg() string {

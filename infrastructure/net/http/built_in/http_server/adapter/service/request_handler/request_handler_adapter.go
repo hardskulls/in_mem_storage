@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-type ReqHandler = req.ReqHandlerFunc[*http.Request, http.ResponseWriter]
+type ReqHandler = req.ReqHandler[*http.Request, http.ResponseWriter]
 
 type StandardHTTPRequestAdapter struct {
 }
