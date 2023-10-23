@@ -18,10 +18,10 @@ type RateLimFunc[
 	S ~string,
 	W req.Writer[S],
 ] func(
-	reqSrv *reqsrv.RequestService[R, W],
-	cmdEx *cmdex.CrudCommandService[C],
-	rLim *rlim.RateLimitService[string],
-	ttl *ttlserv.TimeToLiveService[time.Time],
+	reqSrv reqsrv.RequestService[R, W],
+	cmdEx cmdex.CrudCommandService[C],
+	rLim rlim.RateLimitService,
+	ttl ttlserv.TimeToLiveService,
 )
 
 func NewRateLimiter[
@@ -31,10 +31,10 @@ func NewRateLimiter[
 	W req.Writer[S],
 ](path string) RateLimFunc[C, R, S, W] {
 	f := func(
-		reqSrv *reqsrv.RequestService[R, W],
-		cmdEx *cmdex.CrudCommandService[C],
-		rLim *rlim.RateLimitService[string],
-		ttl *ttlserv.TimeToLiveService[time.Time],
+		reqSrv reqsrv.RequestService[R, W],
+		cmdEx cmdex.CrudCommandService[C],
+		rLim rlim.RateLimitService,
+		ttl ttlserv.TimeToLiveService,
 	) {
 		handler := func(r R, w W) {
 			limit, err := r.Produce()
@@ -54,27 +54,56 @@ func NewRateLimiter[
 	return f
 }
 
+type CrudCommandFunc[
+	B any,
+	C crud.CrudCommand,
+	R CrudReq[B, C],
+	S ~string,
+	W req.Writer[S],
+] func(
+	reqSrv reqsrv.RequestService[R, W],
+	cmdEx cmdex.CrudCommandService[C],
+	rLim rlim.RateLimitService,
+	ttl ttlserv.TimeToLiveService,
+)
+
 func DefaultCfg[
 	B any,
 	C crud.CrudCommand,
 	R CrudReq[B, C],
 	S ~string,
 	W req.Writer[S],
-]() {
+](path string) CrudCommandFunc[B, C, R, S, W] {
 	f := func(
 		reqSrv reqsrv.RequestService[R, W],
 		cmdEx cmdex.CrudCommandService[C],
-		rLim rlim.RateLimitService[string],
-		ttl ttlserv.TimeToLiveService[time.Time],
+		rLim rlim.RateLimitService,
+		ttl ttlserv.TimeToLiveService,
 	) {
 		handle := func(r R, w W) {
-			user, date, body := r.From(), r.Date(), r.Body()
+			user, now := r.From(), r.Date()
+
+			rateLimit, err := rLim.Get(user)
+			if err != nil {
+				_ = w.Write(S(err.Error()))
+				return
+			}
+
+			lastUsed, expiresAfter := rateLimit.LastUsed, rateLimit.Limit
+			elapsed := lastUsed.Add(expiresAfter).Sub(now)
+
+			time.Sleep(elapsed)
+
 			cmd, err := r.ProduceCmd()
 			if err != nil {
 				_ = w.Write(S(err.Error()))
 				return
 			}
 
+			res := cmdEx.Execute(cmd)
+			_ = w.Write(S(res.String()))
 		}
+		reqSrv.Handle(reqhdnl.ReqHandler[R, W]{Path: path, Handle: handle})
 	}
+	return f
 }

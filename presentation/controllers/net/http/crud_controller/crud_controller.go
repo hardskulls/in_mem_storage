@@ -7,7 +7,6 @@ import (
 	ttlserv "in_mem_storage/application/service/time_to_live"
 	req "in_mem_storage/domain/incoming_request/abstraction"
 	"in_mem_storage/domain/transaction/command/crud"
-	"time"
 )
 
 type (
@@ -16,7 +15,7 @@ type (
 // ReqHandler  = reqsrv.RequestService[*http.Request, http.ResponseWriter]
 )
 
-type CrudReq[Body, Command any] interface {
+type CrudReq[Body any, Command crud.CrudCommand] interface {
 	req.Request[Body]
 	crud.CrudCommandProducer[Command]
 }
@@ -30,35 +29,28 @@ type CrudController[
 ] struct {
 	reqSrv reqsrv.RequestService[Read, Write]
 	cmdEx  cmdex.CrudCommandService[Command]
-	rLim   rlim.RateLimitService[string]
-	ttl    ttlserv.TimeToLiveService[time.Time]
+	rLim   rlim.RateLimitService
+	ttl    ttlserv.TimeToLiveService
 }
-
-//type Test[T interface{error; comparable}] struct {
-//	S interface{error; fmt.Stringer}
-//}
 
 func New[B any, C crud.CrudCommand, R CrudReq[B, C], S ~string, W req.Writer[S]](
 	reqSrv reqsrv.RequestService[R, W],
 	cmdEx cmdex.CrudCommandService[C],
-	rLim rlim.RateLimitService[string],
-	ttl ttlserv.TimeToLiveService[time.Time],
+	rLim rlim.RateLimitService,
+	ttl ttlserv.TimeToLiveService,
 ) CrudController[B, C, R, S, W] {
 	return CrudController[B, C, R, S, W]{reqSrv, cmdEx, rLim, ttl}
 }
-
-type Op[T any] req.Writer[T]
 
 func (c *CrudController[B, C, R, S, W]) RunConfigs(
 	cfgs ...func(
 		reqSrv reqsrv.RequestService[R, W],
 		cmdEx cmdex.CrudCommandService[C],
-		rLim rlim.RateLimitService[string],
-		ttl ttlserv.TimeToLiveService[time.Time],
+		rLim rlim.RateLimitService,
+		ttl ttlserv.TimeToLiveService,
 	),
 ) {
 	for _, cfg := range cfgs {
 		go cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl)
 	}
-
 }

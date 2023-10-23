@@ -12,7 +12,7 @@ import (
 )
 
 func MissingParamError(missing string) errs.Error {
-	return errs.New(fmt.Sprintf("[RequestBodyError] : missing required parameter: %v"), 1)
+	return errs.New(fmt.Sprintf("[RequestBodyError] : missing required parameter: %v", missing), 1)
 }
 
 func InvalidIpError() errs.Error {
