@@ -2,7 +2,7 @@ package value_objects
 
 import (
 	"fmt"
-	errs "in_mem_storage/domain/error"
+	errs "in_mem_storage/domain/error/value_object"
 	lim "in_mem_storage/domain/rate_limiter/value_object"
 	"net"
 	"net/http"
@@ -11,17 +11,17 @@ import (
 	"time"
 )
 
-func MissingParamError(missing string) errs.Error {
+func MissingParamError(missing string) error {
 	return errs.New(fmt.Sprintf("[RequestBodyError] : missing required parameter: %v", missing), 1)
 }
 
-func InvalidIpError() errs.Error {
+func InvalidIpError() error {
 	return errs.New(fmt.Sprintf("[InvalidIpError] : specified ip address is not valid"), 1)
 }
 
 type Request http.Request
 
-func (r *Request) Produce() (lim.RateLimit, errs.Error) {
+func (r *Request) ProduceRateLim() (lim.RateLimit, error) {
 	var buff []byte
 	_, err := r.Body.Read(buff)
 	if err != nil {
@@ -50,5 +50,5 @@ func (r *Request) Produce() (lim.RateLimit, errs.Error) {
 		return lim.RateLimit{}, errs.FromError(err, 1)
 	}
 
-	return lim.RateLimit{For: forIp, Limit: time.Duration(timeout) * time.Millisecond}, errs.Error{}
+	return lim.RateLimit{For: forIp, Limit: time.Duration(timeout) * time.Millisecond}, nil
 }

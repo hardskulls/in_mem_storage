@@ -1,5 +1,5 @@
 package value_objects
 
-type ExpiryCandidate struct {
-	Candidate string
+type ExpiryRec struct {
+	Record string
 }

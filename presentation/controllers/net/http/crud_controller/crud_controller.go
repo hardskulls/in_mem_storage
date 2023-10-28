@@ -1,56 +1,52 @@
 package crud_controller
 
 import (
-	cmdex "in_mem_storage/application/service/command_executor"
+	cmdex "in_mem_storage/application/service/crud_cmd_executor"
+	"in_mem_storage/application/service/logger"
 	rlim "in_mem_storage/application/service/rate_limiter"
-	reqsrv "in_mem_storage/application/service/request_handler"
+	reqsrv "in_mem_storage/application/service/server"
 	ttlserv "in_mem_storage/application/service/time_to_live"
 	req "in_mem_storage/domain/incoming_request/abstraction"
-	"in_mem_storage/domain/transaction/command/crud"
+	crud "in_mem_storage/domain/transaction/command/abstraction"
 )
 
-type (
-// CommandExec = cmdex.CommandService[string, string, time.Time, time.Duration]
-// RateLim     = rlim.RateLimitService[string, time.Time, time.Duration]
-// ReqHandler  = reqsrv.RequestService[*http.Request, http.ResponseWriter]
-)
-
-type CrudReq[Body any, Command crud.CrudCommand] interface {
+type CrudReq[Body any] interface {
 	req.Request[Body]
-	crud.CrudCommandProducer[Command]
+	crud.CrudCommandProducer
 }
 
-type CrudController[
-	Body any,
-	Command crud.CrudCommand,
-	Read CrudReq[Body, Command],
-	S ~string,
-	Write req.Writer[S],
-] struct {
+type CrudController[Read, Write any] struct {
 	reqSrv reqsrv.RequestService[Read, Write]
-	cmdEx  cmdex.CrudCommandService[Command]
+	cmdEx  cmdex.CrudCommandService
 	rLim   rlim.RateLimitService
 	ttl    ttlserv.TimeToLiveService
+	logger logger.Logger
 }
 
-func New[B any, C crud.CrudCommand, R CrudReq[B, C], S ~string, W req.Writer[S]](
-	reqSrv reqsrv.RequestService[R, W],
-	cmdEx cmdex.CrudCommandService[C],
+func New[Read, Write any](
+	reqSrv reqsrv.RequestService[Read, Write],
+	cmdEx cmdex.CrudCommandService,
 	rLim rlim.RateLimitService,
 	ttl ttlserv.TimeToLiveService,
-) CrudController[B, C, R, S, W] {
-	return CrudController[B, C, R, S, W]{reqSrv, cmdEx, rLim, ttl}
+	logger logger.Logger,
+) CrudController[Read, Write] {
+	return CrudController[Read, Write]{
+		reqSrv,
+		cmdEx,
+		rLim,
+		ttl,
+		logger,
+	}
 }
 
-func (c *CrudController[B, C, R, S, W]) RunConfigs(
-	cfgs ...func(
+func (c *CrudController[R, W]) RunConfig(
+	cfg func(
 		reqSrv reqsrv.RequestService[R, W],
-		cmdEx cmdex.CrudCommandService[C],
+		cmdEx cmdex.CrudCommandService,
 		rLim rlim.RateLimitService,
 		ttl ttlserv.TimeToLiveService,
+		logger logger.Logger,
 	),
 ) {
-	for _, cfg := range cfgs {
-		go cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl)
-	}
+	cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl, c.logger)
 }

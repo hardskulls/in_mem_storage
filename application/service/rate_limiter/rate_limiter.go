@@ -9,7 +9,7 @@ type RateLimitService struct {
 	rateLimitRepo repo.DefaultRateLimitRepo
 }
 
-func WithRateLimitRepo(repo repo.DefaultRateLimitRepo) RateLimitService {
+func New(repo repo.DefaultRateLimitRepo) RateLimitService {
 	return RateLimitService{rateLimitRepo: repo}
 }
 
