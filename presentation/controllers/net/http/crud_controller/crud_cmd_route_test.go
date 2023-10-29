@@ -1,19 +1,21 @@
 package crud_controller
 
 import (
-	"fmt"
 	"github.com/stretchr/testify/assert"
 	cmdserv "in_mem_storage/application/service/crud_cmd_executor"
 	cmdexec "in_mem_storage/application/service/crud_cmd_executor/abstraction"
+	logger2 "in_mem_storage/application/service/logger"
 	rlimserv "in_mem_storage/application/service/rate_limiter"
 	reqserv "in_mem_storage/application/service/server"
 	ttlserv "in_mem_storage/application/service/time_to_live"
 	reqhdnl "in_mem_storage/domain/incoming_request/value_object"
+	"in_mem_storage/domain/log/value_object/log_record"
 	rlim "in_mem_storage/domain/rate_limiter/value_object"
 	cmds "in_mem_storage/domain/transaction/command/value_object"
-	"in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/command_executor/repository"
-	repository2 "in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/rate_limiter/repository"
-	repository3 "in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/time_to_live/repository"
+	rec "in_mem_storage/domain/transaction/record/value_object"
+	"in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/command_executor/repository"
+	repository2 "in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/rate_limiter/repository"
+	repository3 "in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/time_to_live/repository"
 
 	//crudctrl "in_mem_storage/presentation/controllers/net/http/crud_controller"
 	"sync"
@@ -22,38 +24,42 @@ import (
 )
 
 var storage = ReqRespStorageManualMock{
-	Reader: CrudCmdProducerManualMock{},
+	Reader: ReaderManualMock{},
 	Writer: WriterManualMock{data: make([]string, 0)},
 }
 var user = "user_12345"
+var value = "value for " + user
+var record = rec.Record{
+	Data:    value,
+	Author:  user,
+	Created: time.Now(),
+}
 var rateLimit = rlim.RateLimit{
 	For:      user,
 	LastUsed: time.Now(),
-	Limit:    time.Millisecond * 500,
+	Limit:    time.Millisecond * 100,
 }
-var result = fmt.Sprintf("[RateLimitOperationSuccess] Your rate limit is, %v", rateLimit)
-var command = cmds.SetCommand{
-	Key:          "key",
-	Val:          "value",
-	ExpiresAfter: time.Second * 50,
+var result = value
+var command = cmds.GetCommand{
+	Key: user,
 }
 
 // Request.
-type CrudCmdProducerManualMock struct{}
+type ReaderManualMock struct{}
 
-func (r CrudCmdProducerManualMock) ProduceCmd() (cmdexec.DefaultCommandExecutor, error) {
+func (r ReaderManualMock) ProduceCmd() (cmdexec.DefaultCommandExecutor, error) {
 	return command, nil
 }
 
-func (r CrudCmdProducerManualMock) Body() string {
+func (r ReaderManualMock) Body() string {
 	return "body"
 }
 
-func (r CrudCmdProducerManualMock) From() string {
+func (r ReaderManualMock) From() string {
 	return user
 }
 
-func (r CrudCmdProducerManualMock) Date() time.Time {
+func (r ReaderManualMock) Date() time.Time {
 	return time.Now()
 }
 
@@ -72,12 +78,12 @@ func (m *WriterManualMock) Write(str string) error {
 
 // Request & response storage.
 type ReqRespStorageManualMock struct {
-	Reader CrudCmdProducerManualMock
+	Reader ReaderManualMock
 	Writer WriterManualMock
 }
 
 // Request handler.
-type ReqHandlerManualMock = reqhdnl.ReqHandler[CrudCmdProducerManualMock, *WriterManualMock]
+type ReqHandlerManualMock = reqhdnl.ReqHandler[ReaderManualMock, *WriterManualMock]
 
 type ReqHandlerPortManualMock struct{}
 
@@ -85,42 +91,39 @@ func (r ReqHandlerPortManualMock) Handle(handler ReqHandlerManualMock) {
 	handler.Handle(storage.Reader, &storage.Writer)
 }
 
-// Mock aliases.
-type ()
+// Log record.
+type LogRecordManualMock struct{}
+
+func (l LogRecordManualMock) LogRecord(_ log_record.DefaultLogRecord) {}
 
 func TestCrudControllerCrudCommandsRoute(t *testing.T) {
-	// repos
 	recRepo := repository.RecordRepo[string]{}
 	ttlRepo := repository3.ExpiryRecRepo[time.Time]{}
 	rLimRepo := repository2.RateLimitRepo[string]{}
 
-	// ports
-	reqPort := ReqHandlerPortManualMock{}
+	reqAdapter := ReqHandlerPortManualMock{}
+	logRecAdapter := LogRecordManualMock{}
 
-	// services
-	reqService := reqserv.New[CrudCmdProducerManualMock, *WriterManualMock](reqPort)
-	cmdEx := cmdserv.New(&recRepo, &ttlRepo)
-	rLim := rlimserv.New(&rLimRepo)
-	ttl := ttlserv.New(&ttlRepo)
+	reqServ := reqserv.New[ReaderManualMock, *WriterManualMock](reqAdapter)
+	cmdExServ := cmdserv.New(&recRepo, &ttlRepo)
+	rLimServ := rlimserv.New(&rLimRepo)
+	ttlServ := ttlserv.New(&ttlRepo)
+	logServ := logger2.New(logRecAdapter)
 
-	// routes
 	path := "/api/rate_limit"
 	rateLimiterRoute := CrudCommandsRoute[
-		string, CrudCmdProducerManualMock, string, *WriterManualMock,
+		string, ReaderManualMock, string, *WriterManualMock,
 	](path)
 
-	// controllers
 	controller :=
-		New[CrudCmdProducerManualMock, *WriterManualMock](
-			reqService, cmdEx, rLim, ttl,
+		New[ReaderManualMock, *WriterManualMock](
+			reqServ, cmdExServ, rLimServ, ttlServ, logServ,
 		)
 
-	// background routes execution
-	controller.RunConfig(rateLimiterRoute)
+	_ = rLimRepo.Set(user, rateLimit)
+	_ = recRepo.Set(user, record)
 
-	// asserts
-	expectedSavedLimit, _ := rLimRepo.Get(user)
-	assert.Equal(t, expectedSavedLimit, rateLimit)
+	controller.RunConfig(rateLimiterRoute)
 
 	expectedRequestRes := result
 	assert.Equal(t, expectedRequestRes, storage.Writer.data[0])

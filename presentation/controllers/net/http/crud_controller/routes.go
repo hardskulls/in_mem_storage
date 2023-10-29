@@ -32,11 +32,14 @@ func logAndWriteError[S ~string](
 	event string,
 	err error,
 ) {
-	logger.Log(makeLog(event, err))
+	if err != nil {
+		logger.Log(makeLog(event, err))
+		err = writer.Write(S(err.Error()))
 
-	err = writer.Write(S(err.Error()))
-
-	logger.Log(makeLog(WriterErrEvent, err))
+		if err != nil {
+			logger.Log(makeLog(WriterErrEvent, err))
+		}
+	}
 }
 
 type RateLimFunc[
@@ -51,7 +54,7 @@ type RateLimFunc[
 	logger logger.Logger,
 )
 
-func NewRateLimiterRoute[
+func RateLimiterRoute[
 	R reqlimprod.RateLimitProducer,
 	S ~string,
 	W req.Writer[S],
@@ -118,7 +121,6 @@ func CrudCommandsRoute[
 			rateLimit, err := rLim.Get(user)
 			if err != nil {
 				logAndWriteError[S](logger, w, RateLimServiceErrEvent, err)
-
 				defaultZeroLim := rlimobj.RateLimit{For: user, Limit: time.Nanosecond * 0}
 				rateLimit = defaultZeroLim
 			}

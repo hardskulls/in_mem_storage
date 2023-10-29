@@ -9,19 +9,19 @@ import (
 	reqserv "in_mem_storage/application/service/server"
 	ttlserv "in_mem_storage/application/service/time_to_live"
 	reqhdnl "in_mem_storage/domain/incoming_request/value_object"
+	"in_mem_storage/domain/log/value_object/log_record"
 	rlim "in_mem_storage/domain/rate_limiter/value_object"
-	"in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/command_executor/repository"
-	repository2 "in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/rate_limiter/repository"
-	repository3 "in_mem_storage/infrastructure/db/in_mem/built_in/sunc_map/service/time_to_live/repository"
+	"in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/command_executor/repository"
+	repository2 "in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/rate_limiter/repository"
+	repository3 "in_mem_storage/infrastructure/db/in_mem/built_in/sync_map/service/time_to_live/repository"
 	crudctrl "in_mem_storage/presentation/controllers/net/http/crud_controller"
 	"sync"
 	"testing"
 	"time"
-	"in_mem_storage/infrastructure/io/system/built_in/console/service/logger/adapter"
 )
 
 var storage = ReqRespStorageManualMock{
-	Reader: RateLimitProducerManualMock{},
+	Reader: ReaderManualMock{},
 	Writer: WriterManualMock{data: make([]string, 0)},
 }
 var user = "user_12345"
@@ -33,9 +33,9 @@ var rateLimit = rlim.RateLimit{
 var result = fmt.Sprintf("[RateLimitOperationSuccess] Your rate limit is, %v", rateLimit)
 
 // Request.
-type RateLimitProducerManualMock struct{}
+type ReaderManualMock struct{}
 
-func (r RateLimitProducerManualMock) ProduceRateLim() (rlim.RateLimit, error) {
+func (r ReaderManualMock) ProduceRateLim() (rlim.RateLimit, error) {
 	return rateLimit, nil
 }
 
@@ -54,12 +54,12 @@ func (m *WriterManualMock) Write(str string) error {
 
 // Request & response storage.
 type ReqRespStorageManualMock struct {
-	Reader RateLimitProducerManualMock
+	Reader ReaderManualMock
 	Writer WriterManualMock
 }
 
 // Request handler.
-type ReqHandlerManualMock = reqhdnl.ReqHandler[RateLimitProducerManualMock, *WriterManualMock]
+type ReqHandlerManualMock = reqhdnl.ReqHandler[ReaderManualMock, *WriterManualMock]
 
 type ReqHandlerPortManualMock struct{}
 
@@ -67,37 +67,36 @@ func (r ReqHandlerPortManualMock) Handle(handler ReqHandlerManualMock) {
 	handler.Handle(storage.Reader, &storage.Writer)
 }
 
+// Log record.
+type LogRecordManualMock struct{}
+
+func (l LogRecordManualMock) LogRecord(_ log_record.DefaultLogRecord) {}
+
 func TestCrudControllerRateLimitRoute(t *testing.T) {
-	// repos
 	recRepo := repository.RecordRepo[string]{}
 	ttlRepo := repository3.ExpiryRecRepo[time.Time]{}
 	rLimRepo := repository2.RateLimitRepo[string]{}
 
-	//  adapters
 	reqAdapter := ReqHandlerPortManualMock{}
-	logRecAdapter := adapter.LogRecordAdapter{}
+	logRecAdapter := LogRecordManualMock{}
 
-	// services
-	reqService := reqserv.New[RateLimitProducerManualMock, *WriterManualMock](reqAdapter)
-	cmdEx := cmdserv.New(&recRepo, &ttlRepo)
-	rLim := rlimserv.New(&rLimRepo)
-	ttl := ttlserv.New(&ttlRepo)
-	logger := logger2.New(&loggerRepo)
+	reqServ := reqserv.New[ReaderManualMock, *WriterManualMock](reqAdapter)
+	cmdExServ := cmdserv.New(&recRepo, &ttlRepo)
+	rLimServ := rlimserv.New(&rLimRepo)
+	ttlServ := ttlserv.New(&ttlRepo)
+	logServ := logger2.New(&logRecAdapter)
 
-	// routes
 	path := "/api/rate_limit"
-	rateLimiterRoute := crudctrl.NewRateLimiterRoute[RateLimitProducerManualMock, string, *WriterManualMock](path)
-
-	// controllers
+	rateLimiterRoute := crudctrl.RateLimiterRoute[
+		ReaderManualMock, string, *WriterManualMock,
+	](path)
 	controller := crudctrl.
-		New[RateLimitProducerManualMock, *WriterManualMock](
-		reqService, cmdEx, rLim, ttl, logger,
+		New[ReaderManualMock, *WriterManualMock](
+		reqServ, cmdExServ, rLimServ, ttlServ, logServ,
 	)
 
-	// background routes execution
 	controller.RunConfig(rateLimiterRoute)
 
-	// asserts
 	expectedSavedLimit, _ := rLimRepo.Get(user)
 	assert.Equal(t, expectedSavedLimit, rateLimit)
 
