@@ -6,4 +6,5 @@ import (
 
 type ReqHandlerPort[R, W any] interface {
 	Handle(handler req.ReqHandler[R, W])
+	Run(port int) error
 }

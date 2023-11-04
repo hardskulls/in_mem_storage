@@ -16,3 +16,7 @@ func New[R, W any](with port.ReqHandlerPort[R, W]) RequestService[R, W] {
 func (rs *RequestService[R, W]) Handle(handler req.ReqHandler[R, W]) {
 	rs.requestPort.Handle(handler)
 }
+
+func (rs *RequestService[R, W]) Run(port int) error {
+	return rs.requestPort.Run(port)
+}

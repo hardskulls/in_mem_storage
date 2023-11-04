@@ -5,6 +5,7 @@ import (
 	"in_mem_storage/internal/domain/incoming_request/value_object/request"
 	"in_mem_storage/internal/domain/incoming_request/value_object/response"
 	"net/http"
+	"strconv"
 )
 
 type ReqHandler = req.ReqHandler[request.Request, response.Response]
@@ -16,4 +17,8 @@ func (s *StandardHTTPRequestAdapter) Handle(handler ReqHandler) {
 		handler.Handle(request.New(r), response.New(w))
 	}
 	http.HandleFunc(handler.Path, f)
+}
+
+func (s StandardHTTPRequestAdapter) Run(port int) error {
+	return http.ListenAndServe(":"+strconv.Itoa(port), nil)
 }

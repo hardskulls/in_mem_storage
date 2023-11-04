@@ -1,4 +1,4 @@
-package crud_controller
+package http_controller
 
 import (
 	"fmt"
