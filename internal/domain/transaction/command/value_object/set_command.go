@@ -27,7 +27,7 @@ func (c SetCommand) Execute(
 
 	err = recRepo.Set(c.Key, rec.Record{Data: c.Val})
 	if err != nil {
-		return UserNotification{Msg: fmt.Sprintf("[!! Error !!] : your data was not saved")}
+		return UserNotification{Msg: "[!! Error !!] : your data was not saved"}
 	}
 
 	return UserNotification{Msg: "[SetCommand] executed successfully."}
