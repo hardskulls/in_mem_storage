@@ -1,0 +1,1 @@
+Domain layer of clean architecture designed by DDD.
