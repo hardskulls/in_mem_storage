@@ -6,17 +6,17 @@ import (
 )
 
 type RequestService[Read, Write any] struct {
-	requestPort port.ReqHandlerPort[Read, Write]
+	reqPort port.ReqHandlerPort[Read, Write]
 }
 
 func New[R, W any](with port.ReqHandlerPort[R, W]) RequestService[R, W] {
 	return RequestService[R, W]{with}
 }
 
-func (rs *RequestService[R, W]) Handle(handler req.ReqHandler[R, W]) {
-	rs.requestPort.Handle(handler)
+func (rs *RequestService[R, W]) HandleReqWith(handler req.ReqHandler[R, W]) {
+	rs.reqPort.Handle(handler)
 }
 
-func (rs *RequestService[R, W]) Run(port int) error {
-	return rs.requestPort.Run(port)
+func (rs *RequestService[R, W]) RunServerOn(port int) error {
+	return rs.reqPort.Run(port)
 }

@@ -71,6 +71,6 @@ func (c *HttpController[R, W]) RunConfigs(f ConfigRunner) {
 	}
 }
 
-func (c *HttpController[R, W]) Run(port int) error {
-	return c.reqSrv.Run(port)
+func (c *HttpController[R, W]) RunOn(port int) error {
+	return c.reqSrv.RunServerOn(port)
 }

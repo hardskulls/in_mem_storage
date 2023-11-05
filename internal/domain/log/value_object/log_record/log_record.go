@@ -30,7 +30,7 @@ func New(
 		description: descr,
 		data:        data,
 		created:     time.Now(),
-		fileLine:    fl.New(int(stFramesUp + stfrup.InOuterFn)),
+		fileLine:    fl.New(stFramesUp + stfrup.InOuterFn),
 	}
 }
 

@@ -12,7 +12,7 @@ type ReqHandler = req.ReqHandler[request.Request, response.Response]
 
 type StandardHTTPRequestAdapter struct{}
 
-func (s *StandardHTTPRequestAdapter) Handle(handler ReqHandler) {
+func (s StandardHTTPRequestAdapter) Handle(handler ReqHandler) {
 	f := func(w http.ResponseWriter, r *http.Request) {
 		handler.Handle(request.New(r), response.New(w))
 	}

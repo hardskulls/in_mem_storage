@@ -3,6 +3,7 @@ package value_object
 import (
 	"fmt"
 	fl "in_mem_storage/internal/domain/log/value_object/file_line"
+	stfrup "in_mem_storage/internal/domain/log/value_object/stack_frames_up"
 	"runtime"
 )
 
@@ -27,7 +28,7 @@ func (e Error) Msg() string {
 }
 
 func (e Error) FileLine() fl.FileLine {
-	return fl.FileLine{File: e.file, Line: e.line}
+	return fl.New(stfrup.InOuterFn)
 }
 
 func (e Error) OccurredAt() string {
