@@ -52,6 +52,17 @@ func logAndWriteError[S ~string](
 	}
 }
 
+func logError(
+	logger *logger.Logger,
+	lvl log.LogLvl,
+	event log.Event,
+	err error,
+) {
+	if err != nil {
+		logger.Log(makeLog(lvl, event, err.Error(), stfrup.InOuterFn))
+	}
+}
+
 type ReturningFunc[R, W any] func(
 	reqSrv *reqsrv.RequestService[R, W],
 	cmdEx *cmdex.CrudCommandService,
@@ -88,7 +99,7 @@ func RateLimiterRoute[
 			res := fmt.Sprintf("[RateLimitOperationSuccess] Your rate limit is, %v", limit)
 			err = w.Write(S(res))
 
-			logger.Log(makeLog(log.Error, WriterErrEvent, err.Error(), stfrup.Here))
+			logError(logger, log.Error, WriterErrEvent, err)
 		}
 		reqSrv.HandleReqWith(reqhdnl.ReqHandler[R, W]{Path: path, Handle: handler})
 	}
@@ -131,7 +142,7 @@ func CrudCommandsRoute[
 			res := cmdEx.Execute(cmd)
 			err = w.Write(S(res.String()))
 
-			logger.Log(makeLog(log.Error, WriterErrEvent, err.Error(), stfrup.Here))
+			logError(logger, log.Error, WriterErrEvent, err)
 		}
 		reqSrv.HandleReqWith(reqhdnl.ReqHandler[R, W]{Path: path, Handle: handle})
 	}
