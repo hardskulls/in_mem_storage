@@ -22,7 +22,7 @@ func findKeyVal(content url.Values) (string, string, error) {
 }
 
 func findAndCheckExpiresAfter(content url.Values) (time.Duration, error) {
-	expireAfter := content.Get("expire_after")
+	expireAfter := content.Get("expires_after")
 	if expireAfter == "" {
 		return 0, MissingParamError("expire_after")
 	}
@@ -34,13 +34,12 @@ func findAndCheckExpiresAfter(content url.Values) (time.Duration, error) {
 }
 
 func (r Request) ProduceCmd() (abstraction.DefaultCommandExecutor, error) {
-	var buff []byte
-	_, err := r.inner.Body.Read(buff)
+	bodyAsStr, err := r.Body()
 	if err != nil {
 		return nil, errs.FromError(err, 1)
 	}
 
-	content, err := url.ParseQuery(string(buff))
+	content, err := url.ParseQuery(bodyAsStr)
 	if err != nil {
 		return nil, errs.FromError(err, 1)
 	}

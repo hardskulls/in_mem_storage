@@ -3,6 +3,7 @@ package request
 import (
 	"fmt"
 	errs "in_mem_storage/internal/domain/error/value_object"
+	"io"
 	"net/http"
 )
 
@@ -18,10 +19,9 @@ func New(r *http.Request) Request {
 	return Request{inner: r}
 }
 
-func (r Request) Body() string {
-	var buff []byte
-	_, _ = r.inner.Body.Read(buff)
-	return string(buff)
+func (r Request) Body() (string, error) {
+	bodyBuff, err := io.ReadAll(r.inner.Body)
+	return string(bodyBuff), err
 }
 
 func (r Request) From() string {
