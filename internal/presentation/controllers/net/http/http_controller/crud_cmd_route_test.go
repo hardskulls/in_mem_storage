@@ -49,8 +49,8 @@ func (r ReaderManualMock) ProduceCmd() (cmdexec.DefaultCommandExecutor, error) {
 	return command, nil
 }
 
-func (r ReaderManualMock) Body() string {
-	return "body"
+func (r ReaderManualMock) Body() (string, error) {
+	return "body", nil
 }
 
 func (r ReaderManualMock) From() string {
