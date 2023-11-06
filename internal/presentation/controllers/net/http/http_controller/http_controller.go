@@ -6,68 +6,54 @@ import (
 	rlim "in_mem_storage/internal/application/service/rate_limiter"
 	reqsrv "in_mem_storage/internal/application/service/server"
 	ttlserv "in_mem_storage/internal/application/service/time_to_live"
-	req "in_mem_storage/internal/domain/incoming_request/abstraction"
+	reqabstr "in_mem_storage/internal/domain/incoming_request/abstraction"
 	crud "in_mem_storage/internal/domain/transaction/command/abstraction"
 )
 
-var (
-	MainGoroutineRunner ConfigRunner = func(f func()) { f() }
-	BgGoroutineRunner   ConfigRunner = func(f func()) { go f() }
+const (
+	BgGoroutineRunner ConfigRunner = iota
+	MainGoroutineRunner
 )
 
 type CrudReq[Body any] interface {
-	req.Request[Body]
+	reqabstr.Request[Body]
 	crud.CrudCommandProducer
 }
 
 type HttpController[Read, Write any] struct {
-	reqSrv  reqsrv.RequestService[Read, Write]
-	cmdEx   cmdex.CrudCommandService
-	rLim    rlim.RateLimitService
-	ttl     ttlserv.TimeToLiveService
-	logger  logger.Logger
-	configs []ReturningFunc[Read, Write]
+	reqSrv *reqsrv.RequestService[Read, Write]
+	cmdEx  *cmdex.CrudCommandService
+	rLim   *rlim.RateLimitService
+	ttl    *ttlserv.TimeToLiveService
+	logger *logger.Logger
 }
 
-type ConfigRunner func(func())
+type ConfigRunner int
 
 func New[Read, Write any](
-	reqSrv reqsrv.RequestService[Read, Write],
-	cmdEx cmdex.CrudCommandService,
-	rLim rlim.RateLimitService,
-	ttl ttlserv.TimeToLiveService,
-	logger logger.Logger,
+	reqSrv *reqsrv.RequestService[Read, Write],
+	cmdEx *cmdex.CrudCommandService,
+	rLim *rlim.RateLimitService,
+	ttl *ttlserv.TimeToLiveService,
+	logger *logger.Logger,
 ) HttpController[Read, Write] {
 	return HttpController[Read, Write]{
-		reqSrv,
-		cmdEx,
-		rLim,
-		ttl,
-		logger,
-		nil,
+		reqSrv: reqSrv,
+		cmdEx:  cmdEx,
+		rLim:   rLim,
+		ttl:    ttl,
+		logger: logger,
 	}
 }
 
-func (c *HttpController[R, W]) RunConfig(
-	cfg func(
-		reqSrv reqsrv.RequestService[R, W],
-		cmdEx cmdex.CrudCommandService,
-		rLim rlim.RateLimitService,
-		ttl ttlserv.TimeToLiveService,
-		logger logger.Logger,
-	),
-) {
-	cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl, c.logger)
-}
-
-func (c *HttpController[R, W]) AppendConfigs(cfgs ...ReturningFunc[R, W]) {
-	c.configs = append(c.configs, cfgs...)
-}
-
-func (c *HttpController[R, W]) RunConfigs(f ConfigRunner) {
-	for _, cfg := range c.configs {
-		config := func() { cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl, c.logger) }
-		f(config)
+func (c *HttpController[R, W]) RunConfigs(runner ConfigRunner, cfgs ...ReturningFunc[R, W]) {
+	for _, cfg := range cfgs {
+		switch runner {
+		case BgGoroutineRunner:
+			go cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl, c.logger)
+		default:
+			cfg(c.reqSrv, c.cmdEx, c.rLim, c.ttl, c.logger)
+		}
 	}
 }
 

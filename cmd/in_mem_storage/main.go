@@ -23,14 +23,14 @@ import (
 )
 
 const (
-	rateLimRoutePath           = "/api/v1/rate_limit/"
-	crudCmdRoutePath           = "/api/v1/db_cmd/"
+	rateLimRoutePath           = "/api/v1/rate_limit"
+	crudCmdRoutePath           = "/api/v1/db_cmd"
 	interval                   = time.Millisecond * 100
 	serverError      log.Event = "Server error"
 )
 
 func main() {
-	recRepo := cmdexecrepo.RecordRepo[string]{}
+	recRepo := cmdexecrepo.New[string]()
 	ttlRepo := ttlrepo.ExpiryRecRepo[time.Time]{}
 	rLimRepo := rlimrepo.RateLimitRepo[string]{}
 
@@ -43,11 +43,11 @@ func main() {
 	ttlServ := ttlserv.New(&ttlRepo)
 	logServ := logserv.New(logRecAdapter)
 
-	ctrl := httpctrl.New(reqServ, cmdExServ, rLimServ, ttlServ, logServ)
+	ctrl := httpctrl.New(&reqServ, &cmdExServ, &rLimServ, &ttlServ, &logServ)
 
 	rLimRoute := httpctrl.RateLimiterRoute[
 		req.Request, string, resp.Response,
-	](rateLimRoutePath)
+	](rateLimRoutePath + "hoho")
 	ttlRoute := httpctrl.TimeToLiveRoute[
 		req.Request, resp.Response,
 	](interval)
@@ -55,11 +55,11 @@ func main() {
 		string, req.Request, string, resp.Response,
 	](crudCmdRoutePath)
 
-	ctrl.AppendConfigs(rLimRoute, ttlRoute, crudCmdRoute)
-	ctrl.RunConfigs(httpctrl.BgGoroutineRunner)
+	ctrl.RunConfigs(httpctrl.BgGoroutineRunner, rLimRoute, crudCmdRoute, ttlRoute)
 
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
-	err := ctrl.Run(port)
+	err := ctrl.RunOn(port)
 
 	logServ.Log(logobj.New(log.Error, serverError, "", err.Error(), stfrup.Here))
+	println("end of the program!")
 }

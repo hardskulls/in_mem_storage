@@ -20,9 +20,9 @@ import (
 
 const (
 	WriterErrEvent          log.Event = "[RequestHandlerWriterError]"
-	RateLimProducerErrEvent log.Event = "[RateLimitProducerError]"
-	RateLimServiceErrEvent  log.Event = "[RateLimitServiceError]"
-	CrudCmdProducerErrEvent log.Event = "[CrudCmdProducerError]"
+	RateLimProducerErrEvent log.Event = "[!!] Error [!!] : rate limiter error"
+	RateLimServiceErrEvent  log.Event = "[!!] Error [!!] : rate limiter error"
+	CrudCmdProducerErrEvent log.Event = "[!!] Error [!!] : command error"
 	CmdExecRes              log.Event = "[CrudCommandResult]"
 )
 
@@ -32,11 +32,11 @@ func makeLog(
 	data string,
 	stFramesUp stfrup.StackFramesUp,
 ) logrec.DefaultLogRecord {
-	return logrec.New(lvl, event, "", data, stFramesUp)
+	return logrec.New(lvl, event, "", data, stFramesUp+stfrup.InOuterFn)
 }
 
 func logAndWriteError[S ~string](
-	logger logger.Logger,
+	logger *logger.Logger,
 	writer req.Writer[S],
 	lvl log.LogLvl,
 	event log.Event,
@@ -44,7 +44,7 @@ func logAndWriteError[S ~string](
 ) {
 	if err != nil {
 		logger.Log(makeLog(lvl, event, err.Error(), stfrup.InOuterFn))
-		err = writer.Write(S(err.Error()))
+		err = writer.Write(S(event))
 
 		if err != nil {
 			logger.Log(makeLog(lvl, event, err.Error(), stfrup.InOuterFn))
@@ -53,11 +53,11 @@ func logAndWriteError[S ~string](
 }
 
 type ReturningFunc[R, W any] func(
-	reqSrv reqsrv.RequestService[R, W],
-	cmdEx cmdex.CrudCommandService,
-	rLim rlim.RateLimitService,
-	ttl ttlserv.TimeToLiveService,
-	logger logger.Logger,
+	reqSrv *reqsrv.RequestService[R, W],
+	cmdEx *cmdex.CrudCommandService,
+	rLim *rlim.RateLimitService,
+	ttl *ttlserv.TimeToLiveService,
+	logger *logger.Logger,
 )
 
 func RateLimiterRoute[
@@ -66,11 +66,11 @@ func RateLimiterRoute[
 	W req.Writer[S],
 ](path string) ReturningFunc[R, W] {
 	f := func(
-		reqSrv reqsrv.RequestService[R, W],
-		cmdEx cmdex.CrudCommandService,
-		rLim rlim.RateLimitService,
-		ttl ttlserv.TimeToLiveService,
-		logger logger.Logger,
+		reqSrv *reqsrv.RequestService[R, W],
+		cmdEx *cmdex.CrudCommandService,
+		rLim *rlim.RateLimitService,
+		ttl *ttlserv.TimeToLiveService,
+		logger *logger.Logger,
 	) {
 		handler := func(r R, w W) {
 			limit, err := r.ProduceRateLim()
@@ -102,18 +102,17 @@ func CrudCommandsRoute[
 	W req.Writer[S],
 ](path string) ReturningFunc[R, W] {
 	f := func(
-		reqSrv reqsrv.RequestService[R, W],
-		cmdEx cmdex.CrudCommandService,
-		rLim rlim.RateLimitService,
-		ttl ttlserv.TimeToLiveService,
-		logger logger.Logger,
+		reqSrv *reqsrv.RequestService[R, W],
+		cmdEx *cmdex.CrudCommandService,
+		rLim *rlim.RateLimitService,
+		ttl *ttlserv.TimeToLiveService,
+		logger *logger.Logger,
 	) {
 		handle := func(r R, w W) {
 			user, now := r.From(), time.Now()
 
 			rateLimit, err := rLim.Get(user)
 			if err != nil {
-				logAndWriteError[S](logger, w, log.Error, RateLimServiceErrEvent, err)
 				defaultZeroLim := rlimobj.RateLimit{For: user, Limit: time.Nanosecond * 0}
 				rateLimit = defaultZeroLim
 			}
@@ -141,11 +140,11 @@ func CrudCommandsRoute[
 
 func TimeToLiveRoute[R, W any](sleep time.Duration) ReturningFunc[R, W] {
 	f := func(
-		reqSrv reqsrv.RequestService[R, W],
-		cmdEx cmdex.CrudCommandService,
-		rLim rlim.RateLimitService,
-		ttl ttlserv.TimeToLiveService,
-		logger logger.Logger,
+		reqSrv *reqsrv.RequestService[R, W],
+		cmdEx *cmdex.CrudCommandService,
+		rLim *rlim.RateLimitService,
+		ttl *ttlserv.TimeToLiveService,
+		logger *logger.Logger,
 	) {
 		for {
 			time.Sleep(sleep)

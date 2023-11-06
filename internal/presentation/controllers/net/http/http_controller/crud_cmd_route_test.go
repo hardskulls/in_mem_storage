@@ -115,13 +115,13 @@ func TestCrudControllerCrudCommandsRoute(t *testing.T) {
 
 	controller :=
 		New[ReaderManualMock, *WriterManualMock](
-			reqServ, cmdExServ, rLimServ, ttlServ, logServ,
+			&reqServ, &cmdExServ, &rLimServ, &ttlServ, &logServ,
 		)
 
 	_ = rLimRepo.Set(user, rateLimit)
 	_ = recRepo.Set(user, record)
 
-	controller.RunConfig(rateLimiterRoute)
+	controller.RunConfigs(MainGoroutineRunner, rateLimiterRoute)
 
 	expectedRequestRes := result
 	assert.Equal(t, expectedRequestRes, storage.Writer.data[0])

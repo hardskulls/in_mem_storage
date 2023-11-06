@@ -15,6 +15,7 @@ import (
 	repository2 "in_mem_storage/internal/infrastructure/db/in_mem/built_in/sync_map/service/rate_limiter/repository"
 	repository3 "in_mem_storage/internal/infrastructure/db/in_mem/built_in/sync_map/service/time_to_live/repository"
 	"in_mem_storage/internal/presentation/controllers/net/http/http_controller"
+	"net/http"
 	"sync"
 	"testing"
 	"time"
@@ -71,6 +72,10 @@ func (r ReqHandlerPortManualMock) Run(port int) error {
 	return nil
 }
 
+func (r ReqHandlerPortManualMock) AllHandlers() []func(http.ResponseWriter, *http.Request) {
+	return []func(http.ResponseWriter, *http.Request){}
+}
+
 // Log record.
 type LogRecordManualMock struct{}
 
@@ -95,10 +100,10 @@ func TestCrudControllerRateLimitRoute(t *testing.T) {
 		ReaderManualMock, string, *WriterManualMock,
 	](path)
 	controller := http_controller.New[ReaderManualMock, *WriterManualMock](
-		reqServ, cmdExServ, rLimServ, ttlServ, logServ,
+		&reqServ, &cmdExServ, &rLimServ, &ttlServ, &logServ,
 	)
 
-	controller.RunConfig(rateLimiterRoute)
+	controller.RunConfigs(http_controller.MainGoroutineRunner, rateLimiterRoute)
 
 	expectedSavedLimit, _ := rLimRepo.Get(user)
 	assert.Equal(t, expectedSavedLimit, rateLimit)
