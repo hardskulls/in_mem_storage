@@ -14,13 +14,12 @@ func InvalidIpError() error {
 }
 
 func (r Request) ProduceRateLim() (lim.RateLimit, error) {
-	var buff []byte
-	_, err := r.inner.Body.Read(buff)
+	bodyAsStr, err := r.Body()
 	if err != nil {
 		return lim.RateLimit{}, errs.FromError(err, 1)
 	}
 
-	content, err := url.ParseQuery(string(buff))
+	content, err := url.ParseQuery(bodyAsStr)
 	if err != nil {
 		return lim.RateLimit{}, errs.FromError(err, 1)
 	}
