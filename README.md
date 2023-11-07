@@ -13,7 +13,7 @@ pairs encoded in the body of request.
 The rate limit for an `IP` address can be set by sending `for` and `limit` keys, 
 where `for` is a valid `IP` address, and `limit` is a limit until the next 
 request in milliseconds.
-- Path `api/v1/rate_limiter/`
+- Path `api/v1/rate_limiter`
 
 #### Time to live
 Can be set using the `Set` command.
@@ -27,4 +27,4 @@ There are 4 commands available in total:
 
 `key` and `value` can be anything, `expires_after` 
 must be the record's `time to live` in seconds.
-- Path `api/v1/db_cmd/`
+- Path `api/v1/db_cmd`
