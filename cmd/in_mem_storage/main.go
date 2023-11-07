@@ -47,7 +47,7 @@ func main() {
 
 	rLimRoute := httpctrl.RateLimiterRoute[
 		req.Request, string, resp.Response,
-	](rateLimRoutePath + "hoho")
+	](rateLimRoutePath)
 	ttlRoute := httpctrl.TimeToLiveRoute[
 		req.Request, resp.Response,
 	](interval)
