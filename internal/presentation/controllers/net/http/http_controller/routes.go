@@ -160,7 +160,7 @@ func TimeToLiveRoute[R, W any](sleep time.Duration) ReturningFunc[R, W] {
 		for {
 			time.Sleep(sleep)
 
-			now := time.Now()
+			now := time.Now().Round(time.Second)
 			expiredRec, err := ttl.Get(now)
 			if err != nil {
 				continue

@@ -19,7 +19,7 @@ func (c SetCommand) Execute(
 	recRepo recrepo.DefaultRecordRepo,
 	ttlRepo ttl.DefaultExpiryRecRepo,
 ) fmt.Stringer {
-	expiryDate := time.Now().Add(c.ExpiresAfter)
+	expiryDate := time.Now().Add(c.ExpiresAfter).Round(time.Second)
 	err := ttlRepo.Set(expiryDate, expirycand.ExpiryRec{Record: c.Key})
 	if err != nil {
 		return UserNotification{Msg: fmt.Sprintf("[!! Error !!] : TTL not set, '%v'", err)}
