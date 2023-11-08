@@ -30,7 +30,7 @@ func findAndCheckExpiresAfter(content url.Values) (time.Duration, error) {
 	if err != nil {
 		return 0, errs.FromError(err, 1)
 	}
-	return time.Millisecond * time.Duration(expiresAfterInt), nil
+	return time.Second * time.Duration(expiresAfterInt), nil
 }
 
 func (r Request) ProduceCmd() (abstraction.DefaultCommandExecutor, error) {
