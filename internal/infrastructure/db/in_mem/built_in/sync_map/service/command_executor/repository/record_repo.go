@@ -37,5 +37,6 @@ func (r *RecordRepo[K]) Update(key K, value rec.Record) error {
 	if err != (errs.Error{}) {
 		return err
 	}
-	return r.Set(key, value)
+	r.inner.Swap(key, value)
+	return err
 }
