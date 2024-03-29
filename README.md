@@ -4,6 +4,8 @@ This is an example of an in-memory database.
 ## Design
 The project is designed following the principles of `clean architecture` and `DDD`.
 
+## Link: [deployed instance](https://in-mem-db-go.onrender.com)
+
 ## Usage
 ### General
 Send your command to one of the available `API` entries using `&`-separated `key=value` 
