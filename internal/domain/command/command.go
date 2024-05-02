@@ -7,9 +7,19 @@ import (
 )
 
 type Empty struct{}
+type Type int
+
+const (
+	GetType Type = iota
+	SetType
+	UpdateType
+	DeleteType
+)
 
 type Command interface {
 	IsCommand()
+	Author() record.Author
+	Type() Type
 }
 
 func NewCommand[K comparable, V any](

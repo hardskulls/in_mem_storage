@@ -15,12 +15,11 @@ type RateLimitConfig struct {
 
 func RateLimit(
 	ctx context.Context,
-	log *slog.Logger,
 	lim ratelim.RateLimit,
 	user record.Author,
-	repo repository.RateLimit,
+	cfg RateLimitConfig,
 ) error {
-	err := repo.SetFor(ctx, user, lim)
+	err := cfg.RLim.SetFor(ctx, user, lim)
 	if err != nil {
 		return err
 	}

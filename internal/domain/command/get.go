@@ -16,3 +16,7 @@ func (c *Get[T]) Key() T {
 }
 
 func (c *Get[T]) IsCommand() {}
+
+func (c *Get[K]) Type() Type {
+	return GetType
+}

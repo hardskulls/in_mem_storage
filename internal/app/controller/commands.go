@@ -5,7 +5,7 @@ import (
 	"in_mem_storage/internal/domain/command"
 	"in_mem_storage/internal/domain/data"
 	"in_mem_storage/internal/domain/ratelim"
-	"in_mem_storage/internal/domain/record"
+	"in_mem_storage/internal/domain/ttl"
 	"in_mem_storage/internal/repository"
 	"in_mem_storage/internal/service"
 	"log/slog"
@@ -15,21 +15,20 @@ import (
 type CommandConfig struct {
 	RLim repository.RateLimit
 	Cmd  service.Command
+	TTL  repository.ExpiryCandidate
 	Log  *slog.Logger
 }
 
 func Command(
 	ctx context.Context,
-	log *slog.Logger,
-	user record.Author,
 	cmd command.Command,
-	rLim repository.RateLimit,
-	cmdSrv service.Command,
-
+	expires ttl.ExpirationTime,
+	ec ttl.ExpiryCandidate,
+	cfg CommandConfig,
 ) (data.JSON, error) {
 	now := time.Now()
 
-	rateLimit, err := rLim.GetFor(ctx, user)
+	rateLimit, err := cfg.RLim.GetFor(ctx, cmd.Author())
 	if err != nil {
 		defaultZeroLim := ratelim.New(now, 0)
 		rateLimit = defaultZeroLim
@@ -39,5 +38,12 @@ func Command(
 
 	time.Sleep(timeout)
 
-	return cmdSrv.Execute(ctx, cmd)
+	if expires.After(time.Now()) && cmd.Type() == command.SetType {
+		err := cfg.TTL.Set(ctx, expires, ec)
+		if err != nil {
+			return data.JSON{}, err
+		}
+	}
+
+	return cfg.Cmd.Execute(ctx, cmd)
 }

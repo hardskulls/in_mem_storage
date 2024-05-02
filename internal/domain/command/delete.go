@@ -16,3 +16,7 @@ func (c *Delete[K]) Key() K {
 }
 
 func (c *Delete[K]) IsCommand() {}
+
+func (c *Delete[K]) Type() Type {
+	return DeleteType
+}

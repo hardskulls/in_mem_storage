@@ -21,3 +21,7 @@ func (c *Update[K, V]) Value() V {
 }
 
 func (c *Update[K, V]) IsCommand() {}
+
+func (c *Update[K, V]) Type() Type {
+	return UpdateType
+}

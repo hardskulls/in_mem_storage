@@ -45,7 +45,7 @@ func addMiddleware(srv *server.Server) *server.Server {
 		timout := time.Second
 		user := "admin"
 
-		_ = controller.TimeToLive(ctx, ttlConfig.Log, timout, user, ttlConfig.Cmd, ttlConfig.TTL)
+		_ = controller.TimeToLive(ctx, timout, user, ttlConfig)
 	}()
 
 	return srv

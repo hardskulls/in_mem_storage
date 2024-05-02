@@ -18,17 +18,15 @@ type TimeToLiveConfig struct {
 
 func TimeToLive(
 	ctx context.Context,
-	log *slog.Logger,
 	sleep time.Duration,
 	user record.Author,
-	with service.Command,
-	ttl repository.ExpiryCandidate,
+	cfg TimeToLiveConfig,
 ) error {
 	for {
 		time.Sleep(sleep)
 
 		now := time.Now().Round(time.Second)
-		expiredRec, err := ttl.Get(ctx, now)
+		expiredRec, err := cfg.TTL.Get(ctx, now)
 		if err != nil {
 			continue
 		}
@@ -37,9 +35,9 @@ func TimeToLive(
 		if err != nil {
 			continue
 		}
-		res, _ := with.Execute(ctx, cmd)
+		res, _ := cfg.Cmd.Execute(ctx, cmd)
 
-		log.Log(
+		cfg.Log.Log(
 			ctx,
 			slog.LevelInfo,
 			"A record expired.",

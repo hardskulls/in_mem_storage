@@ -21,3 +21,7 @@ func (c *Set[K, V]) Value() V {
 }
 
 func (c *Set[K, V]) IsCommand() {}
+
+func (c *Set[K, V]) Type() Type {
+	return SetType
+}
