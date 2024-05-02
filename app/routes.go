@@ -21,11 +21,11 @@ func RateLimRoute(c *fiber.Ctx) error {
 
 	user := c.Query("author")
 
-	limitInSecs, err := strconv.Atoi(c.Query("limit"))
+	limitInMS, err := strconv.Atoi(c.Query("limit"))
 	if err != nil {
-		return badRequest(c, err, "limit must be a number in seconds")
+		return badRequest(c, err, "limit must be a number in milliseconds")
 	}
-	rLim := ratelim.New(time.Now(), time.Duration(limitInSecs)*time.Second)
+	rLim := ratelim.New(time.Now(), time.Duration(limitInMS)*time.Millisecond)
 
 	err = controller.RateLimit(ctx, cfg.Log, rLim, user, cfg.RLim)
 
